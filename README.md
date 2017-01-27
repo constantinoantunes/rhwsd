@@ -6,6 +6,8 @@ This is a wrapper package containing the HWSD and helper functions
 Code:
 
     Based on "Technical note: Processing the Harmonized World Soil Database (Version 1.2) in R" By D G Rossiter Dec 7, 2012 ([available online](http://www.itc.nl/~rossiter/teach/R/R_HWSD.pdf), with copy in the rwhsd package `man` folder).
+    
+    Modified by Constantino Antunes
 
 Data:
 
@@ -32,11 +34,16 @@ save(hwsd, file = "hwsd.RData")
 ## A quick example:
 
 
-```r
-library(rhwsd)
-lat <- 44
-lon <- -80
-gridsize <- 0.1
-ans <- extract.one(box = c(44, 44.5, -88.5, -88))
-```
+This example uses the get.hwsd.latlon function, which builds a box on the provided coordinates with a grid size of 0.1:
 
+```r
+
+library(hwsd)
+
+con = get.hwsd.con("data/HWSD.sqlite3")
+lat = 51.528308
+lon = -0.3817805
+
+get.hwsd.latlon(lat, lon, con=con, hwsd.bil="data/HWSD_RASTER/hwsd.bil")
+
+```

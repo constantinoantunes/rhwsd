@@ -37,12 +37,14 @@ get.box <- function(lat, lon, gridsize = 0.1){
 ##' \dontrun{
 ##' lat <- 44; lon <- -80; gridsize <- 0.1
 ##' abox <- c(lon, lon, lat, lat) + gridsize/2 * c(-1, 1, -1, 1)
-##' get.hwsd.box(abox, con = con)
+##' get.hwsd.box(abox, con = con, hwsd.bil = "./hwsd.bil")
 ##' }
-get.hwsd.box <- function(abox, con = con) {
-  hwsd <- get.hwsd.raster()
+get.hwsd.box <- function(abox, con = con, hwsd.bil = NULL) {
+  hwsd <- get.hwsd.raster(hwsd.bil)
   
-  if(is.null(names(abox)))    names(abox) <- c("lon", "lon", "lat", "lat")
+  if(is.null(names(abox))) {
+    names(abox) <- c("lon", "lon", "lat", "lat")
+  }
   hwsd.win <- crop(hwsd, extent(abox))
 
   ## extract attributes for just this window
@@ -62,16 +64,18 @@ get.hwsd.box <- function(abox, con = con) {
 ##' @param lat  degrees latitude
 ##' @param lon degrees longitude
 ##' @param gridsize size of bounding box in degrees 
+##' @param con database connection
+##' @param hwsd.bil raster file path
 ##' @return records queried from region
 ##' @author D G Rossiter, David LeBauer
 ##' @export
 ##' @examples
 ##' \dontrun{
-##' get.hwsd.latlon(lat = 44, lon = -80, gridsize = 0.1, con = con)
+##' get.hwsd.latlon(lat = 44, lon = -80, gridsize = 0.1, con = con, hwsd.bil = "./hwsd.bil")
 ##' }
-get.hwsd.latlon <- function(lat, lon, gridsize = 0.1, ...){
+get.hwsd.latlon <- function(lat, lon, gridsize = 0.1, con=con, hwsd.bil=hwsd.bil){
   abox <- c(lon, lon, lat, lat) + gridsize/2 * c(-1, 1, -1, 1)
-  result <- get.hwsd.box(abox, con = con)
+  result <- get.hwsd.box(abox, con = con, hwsd.bil = hwsd.bil)
   return(result)
 }
 
@@ -113,9 +117,13 @@ get.hwsd <- function(...){
 ##' @return connection to HWSD.sqlite database
 ##' @author David LeBauer
 ##' @export
-get.hwsd.con <- function(){
-  hwsd.sqlite <- system.file("extdata/HWSD.sqlite", package = "rhwsd")
-  if(hwsd.sqlite == "")hwsd.sqlite <- system.file("inst/extdata/HWSD.sqlite", package = "rhwsd")  
+get.hwsd.con <- function(hwsd.sqlite = NULL){
+  if (is.null(hwsd.sqlite)) {
+    hwsd.sqlite <- system.file("extdata/HWSD.sqlite", package = "rhwsd")
+  }
+  if(hwsd.sqlite == "") {
+    hwsd.sqlite <- system.file("inst/extdata/HWSD.sqlite", package = "rhwsd")  
+  }
   file.copy(hwsd.sqlite, tempdir())
   db <- file.path(tempdir(), "HWSD.sqlite")
   con <<- dbConnect(dbDriver("SQLite"), dbname = hwsd.sqlite)
@@ -127,17 +135,21 @@ get.hwsd.con <- function(){
 ##' copies database so that any changes are not saved in package 
 ##' @title get HWSD con
 ##' @param hwsd.bil (optional) location of file hwsd.bil. Too big for package repository. If necessary, this can be downloaded 
+##' @param download (optional) boolean field indicating whether the database should be downloaded
+##' @param download.url (optional) string field indicating from where the database should be downloaded
 ##' \url{here}{http://webarchive.iiasa.ac.at/Research/LUC/External-World-soil-database/HWSD_Data/HWSD_RASTER.zip}
 ##' @export
 ##' @return hwsd a RasterLayer object with WGS84 projection
-get.hwsd.raster <- function(hwsd.bil = NULL, download = FALSE){
+get.hwsd.raster <- function(hwsd.bil = NULL, download = FALSE, download.url = NULL){
   if(is.null(hwsd.bil)){
     hwsd.bil <- system.file("extdata/hwsd.bil", package = "rhwsd")
   }
   if(!file.exists(hwsd.bil)){
     if(download){
-      download.file(url = "http://file-server.igb.illinois.edu/~dlebauer/hwsd/hwsd.zip",
-                    dest.file = tempfile())
+      if (is.null(download.url)) {
+        download.url = "http://file-server.igb.illinois.edu/~dlebauer/hwsd/hwsd.zip"
+      }
+      download.file(url = download.url, destfile = tempfile())
       data.dir <- system.file("extdata", package = "rhwsd")
       unzip(tempfile(), exdir = data.dir)
     } else {
@@ -145,7 +157,6 @@ get.hwsd.raster <- function(hwsd.bil = NULL, download = FALSE){
       print("i.e.: get.hwsd.raster(download=TRUE)")
       print("if you already have the file, set hwsd.bil = '/path/to/hwsd.bil'")
     }
-
   }
   hwsd <- raster(hwsd.bil)
   proj4string(hwsd) <-  "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
