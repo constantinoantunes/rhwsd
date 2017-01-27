@@ -1,13 +1,13 @@
 R interface to the Harmonized World Soil Database
 =================================================
 
+Forked from https://github.com/dlebauer/rhwsd/
+
 This is a wrapper package containing the HWSD and helper functions
 
 Code:
 
     Based on "Technical note: Processing the Harmonized World Soil Database (Version 1.2) in R" By D G Rossiter Dec 7, 2012 ([available online](http://www.itc.nl/~rossiter/teach/R/R_HWSD.pdf), with copy in the rwhsd package `man` folder).
-    
-    Modified by Constantino Antunes
 
 Data:
 
@@ -30,6 +30,15 @@ proj4string(hwsd) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
 save(hwsd, file = "hwsd.RData")
 ```
 
+## How to install
+
+```r
+
+library(devtools)
+
+install_github("constantinoantunes/rhwsd")
+
+```
 
 ## A quick example:
 
